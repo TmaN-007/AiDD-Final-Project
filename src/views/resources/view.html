@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}{{ resource.title }} - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="container mt-4 mb-5">
+    <!-- Resource Header -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            {% if resource.image_url %}
+                <img src="{{ resource.image_url }}" class="img-fluid rounded mb-4" alt="{{ resource.title }}"
+                     style="max-height: 400px; object-fit: cover; width: 100%;">
+            {% else %}
+                <div class="bg-light rounded mb-4 d-flex align-items-center justify-content-center"
+                     style="height: 400px;">
+                    <i class="bi bi-box-seam text-muted" style="font-size: 4rem;"></i>
+                </div>
+            {% endif %}
+
+            <h2 class="mb-2">{{ resource.title }}</h2>
+
+            <div class="mb-4">
+                <span class="badge bg-secondary me-2">{{ resource.category }}</span>
+                <span class="badge"
+                      style="background-color: {% if resource.status == 'available' %}#198754{% elif resource.status == 'maintenance' %}#ffc107{% else %}#6c757d{% endif %};">
+                    {{ resource.status|upper }}
+                </span>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong><i class="bi bi-geo-alt"></i> Location</strong>
+                    </p>
+                    <p class="text-muted">{{ resource.location }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p class="mb-2">
+                        <strong><i class="bi bi-people"></i> Capacity</strong>
+                    </p>
+                    <p class="text-muted">{{ resource.capacity }} people</p>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h5>Description</h5>
+                <p>{{ resource.description }}</p>
+            </div>
+
+            <div class="mb-4">
+                <p class="text-muted small">
+                    <strong>Owner:</strong> {{ resource.owner.name }}
+                </p>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    {% if current_user.id == resource.owner_id %}
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('resources.edit', resource_id=resource.id) }}"
+                               class="btn btn-outline-primary">
+                                <i class="bi bi-pencil"></i> Edit Resource
+                            </a>
+                            <button type="button" class="btn btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Delete Resource
+                            </button>
+                        </div>
+                    {% elif resource.status == 'available' %}
+                        <a href="{{ url_for('bookings.create', resource_id=resource.id) }}"
+                           class="btn btn-primary w-100">
+                            <i class="bi bi-calendar-plus"></i> Book Now
+                        </a>
+                    {% else %}
+                        <button class="btn btn-secondary w-100" disabled>
+                            Not Available
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Resource Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong class="small text-muted">Category</strong>
+                        <p>{{ resource.category }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="small text-muted">Status</strong>
+                        <p>{{ resource.status|upper }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="small text-muted">Owner</strong>
+                        <p>{{ resource.owner.name }}</p>
+                    </div>
+                    <div class="mb-0">
+                        <strong class="small text-muted">Created</strong>
+                        <p>{{ resource.created_at.strftime('%b %d, %Y') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Reviews ({{ reviews|length }})</h6>
+                </div>
+                <div class="card-body">
+                    {% if reviews %}
+                        {% for review in reviews %}
+                            <div class="mb-4 pb-4 border-bottom">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-0">{{ review.user.name }}</h6>
+                                        <small class="text-muted">
+                                            {{ review.created_at.strftime('%B %d, %Y') }}
+                                        </small>
+                                    </div>
+                                    <div>
+                                        {% for i in range(review.rating) %}
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                        {% endfor %}
+                                        {% for i in range(5 - review.rating) %}
+                                            <i class="bi bi-star text-warning"></i>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <p class="mb-0">{{ review.comment }}</p>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center py-4">No reviews yet</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Review Form -->
+            {% if current_user and current_user.id != resource.owner_id %}
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h6 class="mb-0">Leave a Review</h6>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('resources.add_review', resource_id=resource.id) }}" novalidate>
+                            <div class="mb-3">
+                                <label for="rating" class="form-label">Rating</label>
+                                <select class="form-select" id="rating" name="rating" required>
+                                    <option value="">Select a rating</option>
+                                    <option value="5">5 Stars - Excellent</option>
+                                    <option value="4">4 Stars - Good</option>
+                                    <option value="3">3 Stars - Average</option>
+                                    <option value="2">2 Stars - Poor</option>
+                                    <option value="1">1 Star - Very Poor</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="comment" class="form-label">Comment</label>
+                                <textarea class="form-control" id="comment" name="comment"
+                                          placeholder="Share your experience with this resource..." rows="4"
+                                          required minlength="10"></textarea>
+                                <small class="form-text text-muted">
+                                    Minimum 10 characters
+                                </small>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                Submit Review
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+{% if current_user.id == resource.owner_id %}
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteLabel">Delete Resource</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Are you sure you want to delete <strong>{{ resource.title }}</strong>? This action cannot be undone
+                    and all associated bookings will be affected.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{{ url_for('resources.delete', resource_id=resource.id) }}"
+                          style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Delete Resource</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<script>
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            const forms = document.querySelectorAll('form');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

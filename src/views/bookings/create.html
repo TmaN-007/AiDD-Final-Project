@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Create Booking - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-2">Book Resource</h2>
+                    <p class="text-muted mb-4">{{ resource.title }}</p>
+
+                    {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('bookings.create', resource_id=resource.id) }}" novalidate>
+                        <!-- Resource Details -->
+                        <div class="card bg-light mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-1">
+                                            <strong class="text-muted small">Location</strong>
+                                        </p>
+                                        <p>{{ resource.location }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-1">
+                                            <strong class="text-muted small">Capacity</strong>
+                                        </p>
+                                        <p>{{ resource.capacity }} people</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Booking Details -->
+                        <div class="mb-3">
+                            <label for="start_datetime" class="form-label">Start Date and Time</label>
+                            <input type="datetime-local" class="form-control" id="start_datetime" name="start_datetime"
+                                   required>
+                            <div class="invalid-feedback">
+                                Please provide a start date and time.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="end_datetime" class="form-label">End Date and Time</label>
+                            <input type="datetime-local" class="form-control" id="end_datetime" name="end_datetime"
+                                   required>
+                            <div class="invalid-feedback">
+                                Please provide an end date and time.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="notes" class="form-label">Additional Notes (Optional)</label>
+                            <textarea class="form-control" id="notes" name="notes"
+                                      placeholder="Describe the purpose of your booking or any special requirements..."
+                                      rows="4"></textarea>
+                        </div>
+
+                        <!-- Duration Display -->
+                        <div class="card bg-light mb-4" id="durationCard" style="display: none;">
+                            <div class="card-body">
+                                <p class="mb-0">
+                                    <strong>Duration:</strong>
+                                    <span id="durationText"></span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                            <label class="form-check-label" for="terms">
+                                I agree to the resource booking terms and conditions
+                            </label>
+                            <div class="invalid-feedback">
+                                You must agree to the terms and conditions.
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Confirm Booking
+                            </button>
+                            <a href="{{ url_for('resources.view', resource_id=resource.id) }}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Booking Info Card -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Booking Information</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <strong>Booking Status:</strong> Pending approval by resource owner
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <strong>Confirmation:</strong> You will receive an email once your booking is approved or rejected
+                        </li>
+                        <li class="mb-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <strong>Cancellation:</strong> You can cancel your booking up to 24 hours before the scheduled time
+                        </li>
+                        <li>
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <strong>Contact:</strong> For issues, contact the resource owner directly
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+
+        const startInput = document.getElementById('start_datetime');
+        const endInput = document.getElementById('end_datetime');
+        const durationCard = document.getElementById('durationCard');
+        const durationText = document.getElementById('durationText');
+
+        function calculateDuration() {
+            if (startInput.value && endInput.value) {
+                const start = new Date(startInput.value);
+                const end = new Date(endInput.value);
+
+                if (end > start) {
+                    const diffMs = end - start;
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                    let durationStr = '';
+                    if (diffHours > 0) {
+                        durationStr += diffHours + ' hour' + (diffHours > 1 ? 's' : '');
+                    }
+                    if (diffMinutes > 0) {
+                        if (durationStr) durationStr += ' and ';
+                        durationStr += diffMinutes + ' minute' + (diffMinutes > 1 ? 's' : '');
+                    }
+
+                    durationText.textContent = durationStr;
+                    durationCard.style.display = 'block';
+                }
+            }
+        }
+
+        startInput.addEventListener('change', calculateDuration);
+        endInput.addEventListener('change', calculateDuration);
+
+        // Set minimum date to today
+        const today = new Date().toISOString().slice(0, 16);
+        startInput.min = today;
+        endInput.min = today;
+
+        window.addEventListener('load', function() {
+            const forms = document.querySelectorAll('form');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

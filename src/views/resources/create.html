@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Create Resource - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-4">Create New Resource</h2>
+
+                    {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('resources.create') }}" novalidate>
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Resource Title</label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   placeholder="e.g., Computer Lab A" required minlength="3">
+                            <div class="invalid-feedback">
+                                Please provide a valid resource title (at least 3 characters).
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description"
+                                      placeholder="Describe the resource and its features..." rows="5"
+                                      required minlength="10"></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a description (at least 10 characters).
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select a category</option>
+                                    <option value="classroom">Classroom</option>
+                                    <option value="lab">Lab</option>
+                                    <option value="equipment">Equipment</option>
+                                    <option value="venue">Venue</option>
+                                    <option value="other">Other</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a category.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                       placeholder="e.g., Building A, Room 101" required>
+                                <div class="invalid-feedback">
+                                    Location is required.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="capacity" class="form-label">Capacity</label>
+                                <input type="number" class="form-control" id="capacity" name="capacity"
+                                       placeholder="Number of people" required min="1" max="1000">
+                                <div class="invalid-feedback">
+                                    Please provide a valid capacity (1-1000).
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="">Select a status</option>
+                                    <option value="available">Available</option>
+                                    <option value="maintenance">Maintenance</option>
+                                    <option value="unavailable">Unavailable</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a status.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="image_url" class="form-label">Image URL (Optional)</label>
+                            <input type="url" class="form-control" id="image_url" name="image_url"
+                                   placeholder="https://example.com/image.jpg">
+                            <small class="form-text text-muted">
+                                Provide a URL to a resource image for display.
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Create Resource
+                            </button>
+                            <a href="{{ url_for('resources.list') }}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            const forms = document.querySelectorAll('form');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}

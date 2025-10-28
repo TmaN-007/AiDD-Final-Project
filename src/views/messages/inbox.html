@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Inbox - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 mb-5">
+    <div class="row">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Messages</h2>
+                <a href="{{ url_for('messages.compose') }}" class="btn btn-primary">
+                    <i class="bi bi-pencil-square"></i> Compose New
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Sidebar Filter -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('messages.inbox') }}"
+                           class="list-group-item list-group-item-action {% if request.args.get('folder') != 'archived' %}active{% endif %}">
+                            <i class="bi bi-inbox"></i> Inbox
+                        </a>
+                        <a href="{{ url_for('messages.inbox', folder='archived') }}"
+                           class="list-group-item list-group-item-action {% if request.args.get('folder') == 'archived' %}active{% endif %}">
+                            <i class="bi bi-archive"></i> Archived
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message List -->
+        <div class="col-md-9">
+            {% if threads %}
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <tbody>
+                                {% for thread in threads %}
+                                    <tr style="cursor: pointer;"
+                                        onclick="window.location.href='{{ url_for('messages.thread', thread_id=thread.id) }}'">
+                                        <td class="align-middle" style="width: 60px;">
+                                            <div class="avatar bg-light rounded-circle"
+                                                 style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;">
+                                                {{ thread.other_user.name[0] }}
+                                            </div>
+                                        </td>
+                                        <td class="align-middle">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">
+                                                        {% if thread.last_message %}
+                                                            <strong>{{ thread.other_user.name }}</strong>
+                                                        {% else %}
+                                                            <strong>{{ thread.other_user.name }}</strong>
+                                                        {% endif %}
+                                                    </h6>
+                                                    <p class="text-muted mb-0 small">
+                                                        {% if thread.last_message %}
+                                                            {% if thread.last_message.sender_id == current_user.id %}
+                                                                <strong>You:</strong>
+                                                            {% endif %}
+                                                            {{ thread.last_message.content[:60] }}{% if thread.last_message.content|length > 60 %}...{% endif %}
+                                                        {% else %}
+                                                            No messages
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                                <div class="text-end">
+                                                    <small class="text-muted d-block">
+                                                        {% if thread.last_message %}
+                                                            {{ thread.last_message.created_at.strftime('%b %d') }}
+                                                        {% else %}
+                                                            {{ thread.created_at.strftime('%b %d') }}
+                                                        {% endif %}
+                                                    </small>
+                                                    {% if thread.unread_count > 0 %}
+                                                        <span class="badge bg-primary">{{ thread.unread_count }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center py-5">
+                    <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                    <h5 class="mt-3">No Messages</h5>
+                    <p class="text-muted mb-3">
+                        {% if request.args.get('folder') == 'archived' %}
+                            No archived messages
+                        {% else %}
+                            You don't have any messages yet
+                        {% endif %}
+                    </p>
+                    <a href="{{ url_for('messages.compose') }}" class="btn btn-primary btn-sm">
+                        Compose Message
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

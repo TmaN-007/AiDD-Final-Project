@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block title %}AI Concierge - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-robot"></i> AI Resource Concierge
+                </h4>
+                <small>Ask me about campus resources, availability, and statistics</small>
+            </div>
+            <div class="card-body">
+                <div id="chat-container" class="mb-3" style="height: 400px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px; padding: 15px; background-color: #f8f9fa;">
+                    <div class="alert alert-info">
+                        <strong>Welcome to the AI Concierge!</strong><br>
+                        I can help you with:
+                        <ul class="mb-0 mt-2">
+                            <li>Finding top-rated resources</li>
+                            <li>Viewing popular resources</li>
+                            <li>Exploring resource categories</li>
+                            <li>System statistics and insights</li>
+                        </ul>
+                        Try asking: "Show me the best resources" or "What are the most popular categories?"
+                    </div>
+                </div>
+
+                <form id="query-form">
+                    <div class="input-group">
+                        <input type="text" id="query-input" class="form-control" placeholder="Ask me anything about campus resources..." required>
+                        <button type="submit" class="btn btn-primary" id="ask-btn">
+                            <i class="bi bi-send"></i> Ask
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-3">
+                    <small class="text-muted">
+                        <i class="bi bi-info-circle"></i>
+                        This AI assistant uses real data from the Campus Resource Hub database.
+                        All responses are grounded in actual system information.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5>Quick Stats</h5>
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-primary">{{ context.total_resources }}</h3>
+                            <small class="text-muted">Total Resources</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-success">{{ context.published_resources }}</h3>
+                            <small class="text-muted">Available</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-info">{{ context.categories|length }}</h3>
+                            <small class="text-muted">Categories</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-box">
+                            <h3 class="text-warning">{{ context.total_users }}</h3>
+                            <small class="text-muted">Users</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('query-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const input = document.getElementById('query-input');
+    const query = input.value.trim();
+
+    if (!query) return;
+
+    const chatContainer = document.getElementById('chat-container');
+    const askBtn = document.getElementById('ask-btn');
+
+    // Add user message
+    addMessage('user', query);
+
+    // Clear input and disable button
+    input.value = '';
+    askBtn.disabled = true;
+    askBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Thinking...';
+
+    try {
+        const response = await fetch('/concierge/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ query: query })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            addMessage('assistant', data.response);
+        } else {
+            addMessage('error', data.message || 'An error occurred.');
+        }
+    } catch (error) {
+        addMessage('error', 'Failed to connect to the AI Concierge. Please try again.');
+    } finally {
+        askBtn.disabled = false;
+        askBtn.innerHTML = '<i class="bi bi-send"></i> Ask';
+    }
+
+    // Scroll to bottom
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+});
+
+function addMessage(type, text) {
+    const chatContainer = document.getElementById('chat-container');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message mb-3 ${type}`;
+
+    let bgClass = 'bg-light';
+    let icon = 'bi-person';
+
+    if (type === 'user') {
+        bgClass = 'bg-primary text-white';
+        icon = 'bi-person-fill';
+    } else if (type === 'assistant') {
+        bgClass = 'bg-success text-white';
+        icon = 'bi-robot';
+    } else if (type === 'error') {
+        bgClass = 'bg-danger text-white';
+        icon = 'bi-exclamation-triangle';
+    }
+
+    messageDiv.innerHTML = `
+        <div class="${bgClass} p-3 rounded">
+            <strong><i class="bi ${icon}"></i> ${type === 'user' ? 'You' : type === 'assistant' ? 'AI Concierge' : 'Error'}:</strong><br>
+            <div style="white-space: pre-line;">${escapeHtml(text)}</div>
+        </div>
+    `;
+
+    chatContainer.appendChild(messageDiv);
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+</script>
+{% endblock %}

@@ -1,0 +1,294 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Details - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Booking Details</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Status Badge -->
+                    <div class="mb-4">
+                        <span class="badge"
+                              style="background-color: {% if booking.status == 'approved' %}#198754{% elif booking.status == 'pending' %}#ffc107{% elif booking.status == 'rejected' %}#dc3545{% elif booking.status == 'cancelled' %}#6c757d{% endif %}; font-size: 1rem; padding: 0.5rem 1rem;">
+                            {{ booking.status|upper }}
+                        </span>
+                    </div>
+
+                    <!-- Resource Information -->
+                    <div class="mb-4 pb-4 border-bottom">
+                        <h6 class="mb-3">Resource</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Resource Name</strong>
+                                </p>
+                                <p>
+                                    <a href="{{ url_for('resources.view', resource_id=booking.resource.id) }}">
+                                        {{ booking.resource.title }}
+                                    </a>
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Category</strong>
+                                </p>
+                                <p>{{ booking.resource.category }}</p>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Location</strong>
+                                </p>
+                                <p>{{ booking.resource.location }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Capacity</strong>
+                                </p>
+                                <p>{{ booking.resource.capacity }} people</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Booking Dates -->
+                    <div class="mb-4 pb-4 border-bottom">
+                        <h6 class="mb-3">Booking Schedule</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Start Date & Time</strong>
+                                </p>
+                                <p>
+                                    <i class="bi bi-calendar-event"></i>
+                                    {{ booking.start_datetime.strftime('%B %d, %Y at %I:%M %p') }}
+                                </p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">End Date & Time</strong>
+                                </p>
+                                <p>
+                                    <i class="bi bi-calendar-event"></i>
+                                    {{ booking.end_datetime.strftime('%B %d, %Y at %I:%M %p') }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Duration:</strong>
+                            {% set duration = booking.end_datetime - booking.start_datetime %}
+                            {% set hours = duration.seconds // 3600 %}
+                            {% set minutes = (duration.seconds % 3600) // 60 %}
+                            {{ hours }} hour{{ 's' if hours != 1 else '' }}
+                            {% if minutes > 0 %}
+                                and {{ minutes }} minute{{ 's' if minutes != 1 else '' }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- User Information -->
+                    <div class="mb-4 pb-4 border-bottom">
+                        <h6 class="mb-3">User Information</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Booked By</strong>
+                                </p>
+                                <p>{{ booking.user.name }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1">
+                                    <strong class="text-muted small">Email</strong>
+                                </p>
+                                <p>{{ booking.user.email }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    {% if booking.notes %}
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h6 class="mb-3">Additional Notes</h6>
+                            <p class="text-muted">{{ booking.notes }}</p>
+                        </div>
+                    {% endif %}
+
+                    <!-- Dates Created/Updated -->
+                    <div>
+                        <p class="text-muted small">
+                            <strong>Created:</strong> {{ booking.created_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </p>
+                        <p class="text-muted small">
+                            <strong>Updated:</strong> {{ booking.updated_at.strftime('%B %d, %Y at %I:%M %p') }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Actions</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if is_owner and booking.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('bookings.approve', booking_id=booking.id) }}"
+                                  style="display: inline;">
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="bi bi-check-circle"></i> Approve Booking
+                                </button>
+                            </form>
+
+                            <button type="button" class="btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#rejectModal">
+                                <i class="bi bi-x-circle"></i> Reject Booking
+                            </button>
+                        {% elif is_booker and booking.status in ['pending', 'approved'] %}
+                            <button type="button" class="btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#cancelModal">
+                                <i class="bi bi-trash"></i> Cancel Booking
+                            </button>
+                        {% endif %}
+
+                        <a href="{{ url_for('bookings.list') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Bookings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Resource Owner Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Resource Owner</h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-2">
+                        <strong>{{ booking.resource.owner.name }}</strong>
+                    </p>
+                    <p class="text-muted mb-0 small">
+                        {{ booking.resource.owner.email }}
+                    </p>
+                </div>
+            </div>
+
+            <!-- Booking Status Timeline -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">Status Timeline</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div>
+                                <p class="small"><strong>Created</strong></p>
+                                <p class="text-muted small">
+                                    {{ booking.created_at.strftime('%b %d, %Y %I:%M %p') }}
+                                </p>
+                            </div>
+                        </div>
+                        {% if booking.status != 'pending' %}
+                            <div class="timeline-item">
+                                <div class="timeline-marker"
+                                     style="background-color: {% if booking.status == 'approved' %}#198754{% elif booking.status == 'rejected' %}#dc3545{% elif booking.status == 'cancelled' %}#6c757d{% endif %};"></div>
+                                <div>
+                                    <p class="small"><strong>{{ booking.status|upper }}</strong></p>
+                                    <p class="text-muted small">
+                                        {{ booking.updated_at.strftime('%b %d, %Y %I:%M %p') }}
+                                    </p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+{% if is_owner and booking.status == 'pending' %}
+    <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="rejectLabel">Reject Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" action="{{ url_for('bookings.reject', booking_id=booking.id) }}">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="rejection_reason" class="form-label">Reason for Rejection (Optional)</label>
+                            <textarea class="form-control" id="rejection_reason" name="rejection_reason"
+                                      placeholder="Provide a reason for rejecting this booking..." rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Reject Booking</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Cancel Modal -->
+{% if is_booker and booking.status in ['pending', 'approved'] %}
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-labelledby="cancelLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="cancelLabel">Cancel Booking</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this booking?</p>
+                    <p class="text-muted small">
+                        <i class="bi bi-info-circle"></i>
+                        Cancellations made within 24 hours of the booking may be subject to penalties.
+                    </p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, Keep Booking</button>
+                    <form method="POST" action="{{ url_for('bookings.cancel', booking_id=booking.id) }}"
+                          style="display: inline;">
+                        <button type="submit" class="btn btn-danger">Yes, Cancel Booking</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<style>
+    .timeline-item {
+        display: flex;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-marker {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 1rem;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+</style>
+{% endblock %}

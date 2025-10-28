@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="jumbotron bg-light p-5 rounded">
+            <h1 class="display-4">Welcome to Campus Resource Hub</h1>
+            <p class="lead">Find, book, and share campus resources including study rooms, equipment, lab spaces, and more.</p>
+            <hr class="my-4">
+            <p>Search for resources or create your own to share with the campus community.</p>
+            <a class="btn btn-primary btn-lg" href="{{ url_for('resource.list_resources') }}" role="button">
+                <i class="bi bi-search"></i> Browse Resources
+            </a>
+            {% if not current_user_id %}
+            <a class="btn btn-outline-primary btn-lg" href="{{ url_for('auth.register') }}" role="button">
+                <i class="bi bi-person-plus"></i> Get Started
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-12">
+        <h2>Browse by Category</h2>
+    </div>
+    {% for category in categories %}
+    <div class="col-md-4 mb-3">
+        <a href="{{ url_for('resource.list_resources', category=category) }}" class="text-decoration-none">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-bookmark-fill fs-1 text-primary"></i>
+                    <h5 class="card-title mt-2">{{ category }}</h5>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+
+{% if featured_resources %}
+<div class="row mt-5">
+    <div class="col-12">
+        <h2>Top Rated Resources</h2>
+    </div>
+    {% for resource in featured_resources %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ resource.title }}</h5>
+                <p class="card-text text-muted">
+                    <i class="bi bi-geo-alt"></i> {{ resource.location }}<br>
+                    <i class="bi bi-star-fill text-warning"></i> {{ resource.avg_rating|round(1) }} ({{ resource.review_count }} reviews)
+                </p>
+                <p class="card-text">{{ resource.description[:100] }}...</p>
+                <a href="{{ url_for('resource.view_resource', resource_id=resource.resource_id) }}" class="btn btn-sm btn-primary">
+                    View Details
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="row mt-5">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-search fs-1 text-primary"></i>
+                <h5 class="card-title mt-3">Search & Filter</h5>
+                <p class="card-text">Find exactly what you need with powerful search and filtering options.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-calendar-check fs-1 text-success"></i>
+                <h5 class="card-title mt-3">Easy Booking</h5>
+                <p class="card-text">Reserve resources with our intuitive calendar-based booking system.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-star-fill fs-1 text-warning"></i>
+                <h5 class="card-title mt-3">Reviews & Ratings</h5>
+                <p class="card-text">Make informed decisions with community reviews and ratings.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

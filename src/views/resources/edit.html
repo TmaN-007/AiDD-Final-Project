@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Resource - Campus Resource Hub{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="card-title mb-4">Edit Resource</h2>
+
+                    {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ error }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('resources.edit', resource_id=resource.id) }}" novalidate>
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Resource Title</label>
+                            <input type="text" class="form-control" id="title" name="title"
+                                   value="{{ resource.title }}" required minlength="3">
+                            <div class="invalid-feedback">
+                                Please provide a valid resource title (at least 3 characters).
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description"
+                                      rows="5" required minlength="10">{{ resource.description }}</textarea>
+                            <div class="invalid-feedback">
+                                Please provide a description (at least 10 characters).
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Category</label>
+                                <select class="form-select" id="category" name="category" required>
+                                    <option value="">Select a category</option>
+                                    <option value="classroom" {% if resource.category == 'classroom' %}selected{% endif %}>Classroom</option>
+                                    <option value="lab" {% if resource.category == 'lab' %}selected{% endif %}>Lab</option>
+                                    <option value="equipment" {% if resource.category == 'equipment' %}selected{% endif %}>Equipment</option>
+                                    <option value="venue" {% if resource.category == 'venue' %}selected{% endif %}>Venue</option>
+                                    <option value="other" {% if resource.category == 'other' %}selected{% endif %}>Other</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a category.
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="location" class="form-label">Location</label>
+                                <input type="text" class="form-control" id="location" name="location"
+                                       value="{{ resource.location }}" required>
+                                <div class="invalid-feedback">
+                                    Location is required.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="capacity" class="form-label">Capacity</label>
+                                <input type="number" class="form-control" id="capacity" name="capacity"
+                                       value="{{ resource.capacity }}" required min="1" max="1000">
+                                <div class="invalid-feedback">
+                                    Please provide a valid capacity (1-1000).
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status" name="status" required>
+                                    <option value="">Select a status</option>
+                                    <option value="available" {% if resource.status == 'available' %}selected{% endif %}>Available</option>
+                                    <option value="maintenance" {% if resource.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                    <option value="unavailable" {% if resource.status == 'unavailable' %}selected{% endif %}>Unavailable</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a status.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="image_url" class="form-label">Image URL (Optional)</label>
+                            <input type="url" class="form-control" id="image_url" name="image_url"
+                                   value="{{ resource.image_url or '' }}">
+                            <small class="form-text text-muted">
+                                Provide a URL to a resource image for display.
+                            </small>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Changes
+                            </button>
+                            <a href="{{ url_for('resources.view', resource_id=resource.id) }}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            const forms = document.querySelectorAll('form');
+            Array.prototype.slice.call(forms).forEach(function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+</script>
+{% endblock %}
